@@ -7,31 +7,55 @@ import os
 
 
 app = Flask(__name__)
+app.secret_key = 'super_secret_key'
 
 # 路徑修改
 def get_db_connection():
-    conn = sqlite3.connect('')
-    if not os.path.exists(''):
-        logging.error(f"Database file not found at {''}")
+    conn = sqlite3.connect('shopping_data.db')
+    if not os.path.exists('shopping_data.db'):
+        logging.error(f"Database file not found at {'shopping_data.db'}")
         return None
     conn.row_factory = sqlite3.Row
     cursor = conn.cursor()
 
-# 補齊空缺程式碼
+def check_user_credentials(username, password):
+    return username == "testuser" and password == "testpass"
+
 @app.route()
-def page_login():
-        return 
+def index():
+    return
     
-@app.route('/page_register', methods=[])
+@app.route('/page_register', methods=['GET', 'POST'])
 def page_register():
     if request.method == 'POST':
         data = request.get_json()
-       # 補齊空缺程式碼
-        if ...
-            return jsonify({"status": "error", "message": "此名稱已被使用"})
+        username = data.get('username')
+        password = data.get('password')
+        email = data.get('email')
 
+        # 帳號重複檢查
+        if check_user_exists(username):
+            insert_or_update_user(username, password, email)
+            return jsonify({"status": "success_update", "message": "帳號已存在，成功修改密碼或信箱"})
+
+        # 密碼檢查：長度
         if len(password) < 8:
-       ...
+            return jsonify({"status": "error", "message": "密碼必須超過8個字元"})
+            
+        # 密碼檢查：包含大小寫英文
+        if not (re.search(r'[a-z]', password) and re.search(r'[A-Z]', password)):
+            return jsonify({"status": "error", "message": "密碼必須包含英文大寫和小寫"})
+            
+        # 信箱檢查：格式
+        if not re.match(r"[^@]+@[^@]+\.[^@]+", email):
+            return jsonify({"status": "error", "message": "Email 格式不符重新輸入"})
+            
+        # 全部符合後，寫入資料庫
+        if insert_or_update_user(username, password, email):
+            return jsonify({"status": "success", "message": "註冊成功"})
+        else:
+            # 處理其他可能的資料庫寫入失敗
+            return jsonify({"status": "error", "message": "資料庫寫入失敗，請稍後再試"})
        
     return render_template('page_register.html')
 
@@ -75,6 +99,6 @@ def page_login():
 
 # 補齊空缺程式碼
 if __name__ == '__main__':
-    app.run()
+    app.run(debug=True)
 
 
