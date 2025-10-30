@@ -76,6 +76,11 @@ function display_products(products_to_display) {
     if (!rowState.has(key)) rowState.set(key, { checked: false, qty: 0 });
 
     const state = rowState.get(key);
+
+    if (!state.checked) {
+      state.qty = 0;
+    }
+
     const price = Number(p.price) || 0;
     const total = price * (state.qty || 0);
 
@@ -167,9 +172,27 @@ function apply_filter(products_to_filter) {
     const key = tr.getAttribute('data-key');
     const st = rowState.get(key) || { checked: false, qty: 0 };
 
-    // 列 checkbox
     if (e.target.classList.contains('row-check')) {
-      st.checked = e.target.checked;
+      const isChecked = e.target.checked;
+      st.checked = isChecked;
+
+      const qtyInput = tr.querySelector('.qty-input');
+      const btnDec = tr.querySelector('.btn-dec');
+      const btnInc = tr.querySelector('.btn-inc');
+
+      qtyInput.disabled = !isChecked;
+      btnDec.disabled = !isChecked;
+      btnInc.disabled = !isChecked;
+
+      if (!isChecked) {
+        st.qty = 0;
+        qtyInput.value = 0;
+        updateRowTotal(tr);
+      } else if (st.qty === 0) {
+        st.qty = 1;
+        qtyInput.value = 1;
+        updateRowTotal(tr);
+      }
       rowState.set(key, st);
       refreshSummary();
       return;
@@ -181,6 +204,7 @@ function apply_filter(products_to_filter) {
       const v = Math.max(0, Number(input.value || 0) - 1);
       input.value = v;
       st.qty = v;
+      e.target.disabled = (v <= 1);
       // 若未勾選且 qty>0，自動勾選
       const chk = tr.querySelector('.row-check');
       if (!chk.checked && v > 0) {
@@ -198,6 +222,8 @@ function apply_filter(products_to_filter) {
       const v = Math.max(0, Number(input.value || 0) + 1);
       input.value = v;
       st.qty = v;
+
+      tr.querySelector('.btn-dec').disabled = false;
       const chk = tr.querySelector('.row-check');
       if (!chk.checked && v > 0) {
         chk.checked = true; st.checked = true;
@@ -218,6 +244,8 @@ function apply_filter(products_to_filter) {
     const v = Math.max(0, Number(e.target.value || 0));
     e.target.value = v;
     st.qty = v;
+
+    tr.querySelector('.btn-dec').disabled = (v <= 1);
 
     const chk = tr.querySelector('.row-check');
     if (!chk.checked && v > 0) {
